@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Check -i option.
+#
+# Copyright (c) 2015-2022 The strace developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+. "${srcdir=.}/init.sh"
+
+check_prog grep
+check_prog sed
+
+
+if [ ! "/proc/cpuinfo" ]; then
+	exit 0
+fi
+
+# run this test only if /proc/cpuinfo has pku and ospke flags
+if ! grep -E -e '^flags.*pku' /proc/cpuinfo | grep ospke > /dev/null 2>&1; then
+	exit 0
+fi
+
+# this test works only if pku is present
+set -- "../$NAME"
+$STRACE -e trace=none -f "$@" > "$LOG"  2>&1
+addr1="$(sed -r -n 's/.*--- SIGSEGV \{si_signo=SIGSEGV, si_code=SEGV_PKUERR, si_addr=(0x[[:xdigit:]]+), si_pkey=1}.*/\1/p' $LOG)" &&
+[ -n "$addr1" ] || dump_log_and_fail_with
+addr2="$(sed -r -n 's/.*--- SIGSEGV \{si_signo=SIGSEGV, si_code=SEGV_PKUERR, si_addr=(0x[[:xdigit:]]+), si_pkey=2}.*/\1/p' $LOG)" &&
+[ -n "$addr2" ] || dump_log_and_fail_with
+
+cat > "$EXP" << __EOF__
+\\[pid [[:digit:]]+\\] --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_PKUERR, si_addr=${addr1}, si_pkey=1} ---
+\\[pid [[:digit:]]\\] +++ killed by SIGSEGV +++
+\\[pid [[:digit:]]+\\] --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_PKUERR, si_addr=${addr2}, si_pkey=2} ---
+\\[pid [[:digit:]]\\] +++ killed by SIGSEGV +++
+__EOF__
+
+match_grep "$LOG" "$EXP"

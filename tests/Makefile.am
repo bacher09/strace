@@ -342,6 +342,7 @@ check_PROGRAMS = $(PURE_EXECUTABLES) \
 	setpgrp-exec \
 	signal_receive \
 	signal_receive--pidns-translation \
+	sigsegv_pkey
 	sleep \
 	so_peercred--pidns-translation \
 	stack-fcall \
@@ -566,6 +567,7 @@ MISC_TESTS = \
 	restart_syscall.test \
 	sigblock.test \
 	sigign.test \
+	sigsegv_pkey.test \
 	status-detached.test \
 	status-none-threads.test \
 	status-unfinished-threads.test \

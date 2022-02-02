@@ -915,6 +915,7 @@ sigpending
 sigprocmask
 sigreturn
 sigsuspend
+sigsegv_pkey
 sleep
 so_error
 so_linger
